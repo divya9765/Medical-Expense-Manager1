@@ -1,0 +1,39 @@
+document.getElementById('expense-form').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    let name = document.getElementById('expense-name').value;
+    let amount = document.getElementById('expense-amount').value;
+    let date = document.getElementById('expense-date').value;
+
+    // Send data to Node.js (POST request)
+    let response = await fetch('http://localhost:3000/add-expense', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, amount, date })
+    });
+
+    let result = await response.json();
+    console.log(result.message); // Check if expense is added
+
+    // Refresh Expense List from Back-end
+    loadExpenses();
+
+    document.getElementById('expense-form').reset();
+});
+
+// Function to Load Expenses from Back-end
+async function loadExpenses() {
+    let response = await fetch('http://localhost:3000/expenses');
+    let expenses = await response.json();
+
+    let table = document.getElementById('expense-list');
+    table.innerHTML = ""; // Clear previous entries
+
+    expenses.forEach(exp => {
+        let newRow = table.insertRow();
+        newRow.innerHTML = `<td>${exp.name}</td><td>${exp.amount}</td><td>${exp.date}</td>`;
+    });
+}
+
+// Load expenses on page load
+loadExpenses();

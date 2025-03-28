@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Expense Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 300px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #218838;
+        }
+        .switch {
+            margin-top: 10px;
+            color: blue;
+            cursor: pointer;
+        }
+        #expense-container {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="login-container">
+        <h2>Login</h2>
+        <input type="email" placeholder="Email" id="login-email" required>
+        <input type="password" placeholder="Password" id="login-password" required>
+        <button onclick="login()">Login</button>
+        <p class="switch" onclick="toggleForm()">Don't have an account? Sign up</p>
+    </div>
+    
+    <div class="container" id="signup-container" style="display: none;">
+        <h2>Sign Up</h2>
+        <input type="text" placeholder="Name" id="signup-name" required>
+        <input type="email" placeholder="Email" id="signup-email" required>
+        <input type="password" placeholder="Password" id="signup-password" required>
+        <button onclick="signup()">Sign Up</button>
+        <p class="switch" onclick="toggleForm()">Already have an account? Login</p>
+    </div>
+    
+    <div class="container" id="expense-container">
+        <h2>Add Expense</h2>
+        <form id="expenseForm">
+            <input type="text" id="category" placeholder="Category" required>
+            <input type="number" id="amount" placeholder="Amount" required>
+            <input type="date" id="date" required>
+            <input type="text" id="description" placeholder="Description">
+            <button type="submit">Add Expense</button>
+        </form>
+    </div>
+    
+    <div class="container" id="history-container" style="display: none;">
+        <h2>Total Expense: <span id="totalExpense">0</span></h2>
+        <h2>Expense History</h2>
+        <ul id="expenseList"></ul>
+    </div>
+
+    <script>
+        let isLoggedIn = false;
+
+        function toggleForm() {
+            let loginForm = document.getElementById("login-container");
+            let signupForm = document.getElementById("signup-container");
+            loginForm.style.display = loginForm.style.display === "none" ? "block" : "none";
+            signupForm.style.display = signupForm.style.display === "none" ? "block" : "none";
+        }
+
+        function login() {
+            let email = document.getElementById("login-email").value;
+            let password = document.getElementById("login-password").value;
+            alert("Login successful for: " + email);
+            isLoggedIn = true;
+            showExpenseSection();
+        }
+
+        function signup() {
+            let name = document.getElementById("signup-name").value;
+            let email = document.getElementById("signup-email").value;
+            let password = document.getElementById("signup-password").value;
+            alert("Sign Up successful for: " + name);
+            isLoggedIn = true;
+            showExpenseSection();
+        }
+
+        function showExpenseSection() {
+            if (isLoggedIn) {
+                document.getElementById("login-container").style.display = "none";
+                document.getElementById("signup-container").style.display = "none";
+                document.getElementById("expense-container").style.display = "block";
+                document.getElementById("history-container").style.display = "block";
+                loadExpenses();
+            }
+        }
+
+        document.getElementById('expenseForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const category = document.getElementById('category').value;
+            const amount = document.getElementById('amount').value;
+            const date = document.getElementById('date').value;
+            const description = document.getElementById('description').value;
+
+            await fetch('http://localhost:5000/add-expense', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ category, amount, date, description })
+            });
+
+            loadExpenses();
+        });
+
+        async function loadExpenses() {
+            const res = await fetch('http://localhost:5000/expenses');
+            const expenses = await res.json();
+            const expenseList = document.getElementById('expenseList');
+            expenseList.innerHTML = '';
+            expenses.forEach(expense => {
+                const li = document.createElement('li');
+                li.textContent = `${expense.category} - ₹${expense.amount} on ${expense.date}`;
+                expenseList.appendChild(li);
+            });
+
+            const totalRes = await fetch('http://localhost:5000/total-expense');
+            const totalData = await totalRes.json();
+            document.getElementById('totalExpense').textContent = `₹${totalData.total}`;
+        }
+    </script>
+</body>
+</html>
